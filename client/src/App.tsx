@@ -6,7 +6,7 @@ import { RequestList } from "./components/RequestList";
 import { RequestInspector } from "./components/RequestInspector";
 import type { WebhookRequest } from "./types";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export default function App() {
   const [binId, setBinId] = useState<string | null>(null);
