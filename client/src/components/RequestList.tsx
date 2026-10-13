@@ -1,6 +1,7 @@
 // client/src/components/RequestList.tsx
 import React from "react";
 import type { WebhookRequest } from "../types";
+import { parseEvent } from "../utils/eventParser";
 import { Clock } from "lucide-react";
 
 interface RequestListProps {
@@ -14,24 +15,11 @@ export const RequestList: React.FC<RequestListProps> = ({
   selectedRequest,
   onSelect,
 }) => {
-  const getMethodBadge = (method: string): string => {
-    switch (method.toUpperCase()) {
-      case "POST":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-      case "GET":
-        return "bg-sky-500/10 text-sky-400 border-sky-500/20";
-      case "DELETE":
-        return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-      default:
-        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-    }
-  };
-
   return (
     <aside className="w-full md:w-80 border-r border-gray-800 bg-gray-950 flex flex-col h-[calc(100vh-73px)]">
       <div className="p-3 border-b border-gray-800 flex items-center justify-between text-xs text-gray-400">
-        <span>Requests ({requests.length})</span>
-        <span className="flex items-center gap-1 text-[11px] text-emerald-400">
+        <span className="font-medium text-gray-300">Requests ({requests.length})</span>
+        <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
           Listening
         </span>
@@ -43,12 +31,14 @@ export const RequestList: React.FC<RequestListProps> = ({
             <Clock className="w-8 h-8 mb-2 stroke-[1.5] text-gray-600 animate-pulse" />
             <p className="text-sm font-medium text-gray-400">Waiting for requests...</p>
             <p className="text-xs mt-1 text-gray-600">
-              Send a request to your custom endpoint to see it appear here in real time.
+              Trigger a webhook from GitHub, Stripe, or Postman to see it live.
             </p>
           </div>
         ) : (
           requests.map((req) => {
             const isSelected = selectedRequest?.id === req.id;
+            const parsed = parseEvent(req);
+
             return (
               <div
                 key={req.id}
@@ -60,22 +50,28 @@ export const RequestList: React.FC<RequestListProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded border font-semibold ${getMethodBadge(
-                      req.method
-                    )}`}
-                  >
-                    {req.method}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded border font-semibold ${parsed.badgeColor}`}
+                    >
+                      {parsed.provider}
+                    </span>
+                    <span className="text-xs font-semibold text-gray-200 truncate max-w-30">
+                      {parsed.eventType}
+                    </span>
+                  </div>
                   <span className="text-[11px] text-gray-500 font-mono">
-                    {new Date(req.timestamp).toLocaleTimeString()}
+                    {new Date(req.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </span>
                 </div>
-                <div className="text-xs text-gray-300 font-mono truncate">
-                  /api/hook/{req.binId.slice(0, 8)}...
-                </div>
-                <div className="text-[10px] text-gray-500 font-mono">
-                  IP: {req.ip}
+
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span className="truncate max-w-35 text-gray-300 font-mono">
+                    {parsed.sender}
+                  </span>
+                  <span className="text-[11px] text-gray-500 truncate max-w-22.5">
+                    {parsed.target}
+                  </span>
                 </div>
               </div>
             );
