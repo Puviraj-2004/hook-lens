@@ -1,0 +1,40 @@
+// server/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 📦 Model for Permanent / Claimed Bins
+model Bin {
+  id          String          @id @default(uuid())
+  name        String          @default("Untitled Bin")
+  isPermanent Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  requests    WebhookRecord[]
+
+  @@map("bins")
+}
+
+// 📨 Model for Stored Webhook Payloads
+model WebhookRecord {
+  id        String   @id @default(uuid())
+  binId     String
+  method    String
+  headers   Json
+  query     Json
+  body      Json?
+  ip        String
+  timestamp DateTime @default(now())
+
+  // Relation to Bin
+  bin       Bin      @relation(fields: [binId], references: [id], onDelete: Cascade)
+
+  @@index([binId])
+  @@map("webhook_records")
+}
